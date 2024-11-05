@@ -1,11 +1,27 @@
+using MassTransit;
+using System.Reflection;
+using Ordenes.Consumers;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Add masstransit services
+
+builder.Services.AddMassTransit(x =>
+{
+    x.AddConsumers(typeof(ConsumidorCrearOrden));
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        var rabbitHost = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "amqp://guest:guest@host.docker.internal:5672";
+        cfg.Host(rabbitHost);
+        cfg.ConfigureEndpoints(context);
+    });
+
+});
 
 var app = builder.Build();
 

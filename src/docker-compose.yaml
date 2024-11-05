@@ -1,0 +1,51 @@
+services:
+
+  rabbitmq:
+    image: "rabbitmq:4-management"
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    
+  facturacion:
+    build:
+        context: .
+        dockerfile: Facturacion/Dockerfile
+    ports:
+       - "8180:80"
+    environment:
+      - RABBITMQ_HOST=amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      - rabbitmq
+  
+
+  inventario:
+    build:
+        context: .
+        dockerfile: Inventario/Dockerfile
+    ports:
+        - "8280:80"
+    environment:
+      - RABBITMQ_HOST=amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      - rabbitmq
+  
+  ordenes:
+     build:
+        context: .
+        dockerfile: Ordenes/Dockerfile
+     ports:
+        - "8380:80"
+     environment:
+       - RABBITMQ_HOST=amqp://guest:guest@rabbitmq:5672
+     depends_on:
+       - rabbitmq
+
+  procesos:
+     build:
+        context: .
+        dockerfile: Procesos/Dockerfile
+     environment:
+       - RABBITMQ_HOST=amqp://guest:guest@rabbitmq:5672
+     depends_on:
+       - rabbitmq
+  
