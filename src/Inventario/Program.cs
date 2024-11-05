@@ -1,4 +1,5 @@
 using System.Reflection;
+using Inventario.Consumers;
 using MassTransit;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,11 +13,14 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddMassTransit(x =>
 {
+    x.AddConsumers(typeof(ConsumidorValidarInventario).Assembly);
     x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.Host("rabbitmq://localhost");
+        var rabbitHost = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "amqp://guest:guest@host.docker.internal:5672";
+        cfg.Host(rabbitHost);
+        cfg.ConfigureEndpoints(context);
     });
-    x.AddConsumers(Assembly.GetExecutingAssembly());
+
 });
 
 var app = builder.Build();

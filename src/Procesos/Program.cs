@@ -10,7 +10,9 @@ IHost host = Host.CreateDefaultBuilder(args)
             x.AddSagaStateMachine<OrdenMachineState, OrdenState>().InMemoryRepository();
             x.UsingRabbitMq((context, cfg) =>
             {
-                cfg.Host("rabbitmq://localhost");
+                var rabbitHost = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "amqp://guest:guest@host.docker.internal:5672";
+                cfg.Host(rabbitHost);
+                cfg.ConfigureEndpoints(context);
             });
         });
 

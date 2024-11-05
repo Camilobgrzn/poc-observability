@@ -1,4 +1,6 @@
 using MassTransit;
+using System.Reflection;
+using Ordenes.Consumers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,10 +13,14 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddMassTransit(x =>
 {
+    x.AddConsumers(typeof(ConsumidorCrearOrden));
     x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.Host("rabbitmq://localhost");
+        var rabbitHost = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "amqp://guest:guest@host.docker.internal:5672";
+        cfg.Host(rabbitHost);
+        cfg.ConfigureEndpoints(context);
     });
+
 });
 
 var app = builder.Build();

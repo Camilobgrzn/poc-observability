@@ -8,7 +8,7 @@ namespace Ordenes.Controllers
     [ApiController]
     public class OrdenesController : ControllerBase
     {
-        public readonly IPublishEndpoint _publishEndpoint;
+        private readonly IPublishEndpoint _publishEndpoint;
 
         public OrdenesController(IPublishEndpoint publishEndpoint)
         {
@@ -18,11 +18,12 @@ namespace Ordenes.Controllers
         [HttpPost]
         public string Post()
         {
+            Guid idProcesoOrden = Guid.NewGuid();
             _publishEndpoint.Publish(new IniciarProcesoOrden
             {
-                IdProcesoOrden = Guid.NewGuid()
+                IdProcesoOrden = idProcesoOrden
             });
-            return "proceso  iniciado";
+            return $"proceso  iniciado: {idProcesoOrden}";
         }
     }
 }
