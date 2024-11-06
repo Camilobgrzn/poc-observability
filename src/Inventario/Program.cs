@@ -71,8 +71,8 @@ builder.Services.AddOpenTelemetry()
             .AddMeter("MassTransit")
             .AddOtlpExporter(options =>
             {
-                var elasticpApm = Environment.GetEnvironmentVariable("ELASTIC_APM_URI") ?? "http://localhost:8200";
-                options.Endpoint = new Uri(elasticpApm);
+                var elasticApm = Environment.GetEnvironmentVariable("ELASTIC_APM_URI") ?? "http://localhost:8200";
+                options.Endpoint = new Uri(elasticApm);
             });
     });
 

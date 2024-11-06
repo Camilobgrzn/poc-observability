@@ -1,6 +1,10 @@
 using MassTransit;
-using System.Reflection;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Ordenes.Consumers;
+using Serilog;
+using Serilog.Sinks.Elasticsearch;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +26,58 @@ builder.Services.AddMassTransit(x =>
     });
 
 });
+
+// Configure serilog
+
+builder.Host.UseSerilog((context, configuration) =>
+{
+    var elasticUri = Environment.GetEnvironmentVariable("ELASTIC_URI") ?? "http://localhost:9200";
+    configuration
+        .Enrich.FromLogContext()
+        .WriteTo.Console()
+        .WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri(elasticUri))
+        {
+            IndexFormat = "applogs-{0:yyyy.MM}",
+            AutoRegisterTemplate = true
+        })
+        .Enrich.WithProperty("Application", "Ordenes");
+});
+
+// Configure OpenTelemetry
+
+var resourceBuilder = ResourceBuilder.CreateDefault()
+    .AddService("Ordenes");
+
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracerProviderBuilder =>
+    {
+        tracerProviderBuilder
+            .SetResourceBuilder(resourceBuilder)
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddSource("MassTransit")
+            .AddOtlpExporter(options =>
+            {
+                var elasticApm = Environment.GetEnvironmentVariable("ELASTIC_APM_URI") ?? "http://localhost:8200";
+                options.Endpoint = new Uri(elasticApm);
+            });
+    })
+    .WithMetrics(metricProviderBuilder =>
+    {
+        metricProviderBuilder
+            .SetResourceBuilder(resourceBuilder)
+            .AddHttpClientInstrumentation()
+            .AddAspNetCoreInstrumentation()
+            .AddRuntimeInstrumentation()
+            .AddMeter("MassTransit")
+            .AddOtlpExporter(options =>
+            {
+                var elasticApm = Environment.GetEnvironmentVariable("ELASTIC_APM_URI") ?? "http://localhost:8200";
+                options.Endpoint = new Uri(elasticApm);
+            });
+
+    });
+    
 
 var app = builder.Build();
 
