@@ -43,6 +43,8 @@ builder.Host.UseSerilog((context, configuration) =>
 });
 
 // Configure OpenTelemetry
+var resourceBuilder = ResourceBuilder.CreateDefault()
+    .AddService("Facturacion");
 
 builder.Services.AddOpenTelemetry()
     .WithTracing(tracerProviderBuilder =>
@@ -51,8 +53,7 @@ builder.Services.AddOpenTelemetry()
             .AddAspNetCoreInstrumentation()
             .AddHttpClientInstrumentation()
             .AddSource("MassTransit")
-            .SetResourceBuilder(ResourceBuilder.CreateDefault()
-                .AddService("Facturacion"))
+            .SetResourceBuilder(resourceBuilder)
             .AddOtlpExporter(options =>
             {
                 var elasticpApm = Environment.GetEnvironmentVariable("ELASTIC_APM_URI") ?? "http://localhost:8200";
@@ -65,7 +66,9 @@ builder.Services.AddOpenTelemetry()
         metricProviderBuilder
             .AddAspNetCoreInstrumentation()
             .AddHttpClientInstrumentation()
+            .AddRuntimeInstrumentation()
             .AddMeter("MassTransit")
+            .SetResourceBuilder(resourceBuilder)
             .AddOtlpExporter(options =>
             {
                 var elasticpApm = Environment.GetEnvironmentVariable("ELASTIC_APM_URI") ?? "http://localhost:8200";
