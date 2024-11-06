@@ -9,13 +9,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Elastic.Serilog.Sinks" Version="8.12.2" />
     <PackageReference Include="MassTransit" Version="8.0.16" />
     <PackageReference Include="MassTransit.RabbitMQ" Version="8.0.16" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.9.0" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.9.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.9.0" />
     <PackageReference Include="Serilog.Extensions.Hosting" Version="8.0.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+    <PackageReference Include="Serilog.Sinks.Elasticsearch" Version="10.0.0" />
   </ItemGroup>
 
   <ItemGroup>
