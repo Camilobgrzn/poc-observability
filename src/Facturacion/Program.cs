@@ -1,5 +1,10 @@
 using Facturacion.Consumers;
 using MassTransit;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Serilog;
+using Serilog.Sinks.Elasticsearch;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +25,53 @@ builder.Services.AddMassTransit(x =>
          cfg.ConfigureEndpoints(context);
     });
 });
+
+// Configure serilog
+
+builder.Host.UseSerilog((context, configuration) =>
+{
+    var elasticUri = Environment.GetEnvironmentVariable("ELASTIC_URI") ?? "http://localhost:9200";
+    configuration
+        .Enrich.FromLogContext()
+        .WriteTo.Console()
+        .WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri(elasticUri))
+        {
+            IndexFormat = "applogs-{0:yyyy.MM}",
+            AutoRegisterTemplate = true
+        })
+        .Enrich.WithProperty("Application", "Facturacion");
+});
+
+// Configure OpenTelemetry
+
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracerProviderBuilder =>
+    {
+        tracerProviderBuilder
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddSource("MassTransit")
+            .SetResourceBuilder(ResourceBuilder.CreateDefault()
+                .AddService("Facturacion"))
+            .AddOtlpExporter(options =>
+            {
+                var elasticpApm = Environment.GetEnvironmentVariable("ELASTIC_APM_URI") ?? "http://localhost:8200";
+                options.Endpoint = new Uri(elasticpApm);
+            });
+
+    })
+    .WithMetrics(metricProviderBuilder =>
+    {
+        metricProviderBuilder
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddMeter("MassTransit")
+            .AddOtlpExporter(options =>
+            {
+                var elasticpApm = Environment.GetEnvironmentVariable("ELASTIC_APM_URI") ?? "http://localhost:8200";
+                options.Endpoint = new Uri(elasticpApm);
+            });
+    });
 
 var app = builder.Build();
 
