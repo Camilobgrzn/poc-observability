@@ -10,7 +10,7 @@ IHost host = Host.CreateDefaultBuilder(args)
     //Configure Serilog
     .UseSerilog((context, configuration) =>
     {
-        var elasticUri = Environment.GetEnvironmentVariable("ELASTIC_URI") ?? "http://localhost:9200";
+        var elasticUri = Environment.GetEnvironmentVariable("ELASTIC_URI") ?? "http://elastic:fenix123@host.docker.internal:9200";
         configuration
             .Enrich.FromLogContext()
             .WriteTo.Console()
@@ -47,7 +47,7 @@ IHost host = Host.CreateDefaultBuilder(args)
                     .AddSource("MassTransit")
                     .AddOtlpExporter(options =>
                     {
-                        var elasticpApm = Environment.GetEnvironmentVariable("ELASTIC_APM_URI") ?? "http://localhost:8200";
+                        var elasticpApm = Environment.GetEnvironmentVariable("ELASTIC_APM_URI") ?? "http://host.docker.internal:8400";
                         options.Endpoint = new Uri(elasticpApm);
                     });
             })
@@ -59,7 +59,7 @@ IHost host = Host.CreateDefaultBuilder(args)
                     .AddMeter("MassTransit")
                     .AddOtlpExporter(options =>
                     {
-                        var elasticpApm = Environment.GetEnvironmentVariable("ELASTIC_APM_URI") ?? "http://localhost:8200";
+                        var elasticpApm = Environment.GetEnvironmentVariable("ELASTIC_APM_URI") ?? "http://host.docker.internal:8400";
                         options.Endpoint = new Uri(elasticpApm);
                     });
             });

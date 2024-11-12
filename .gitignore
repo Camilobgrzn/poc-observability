@@ -66,3 +66,4 @@ ScaffoldingReadMe.txt
 
 # Local history for Visual Studio
 .vs/
+/src/ELK/elastic_data/infra_elastic_data/
