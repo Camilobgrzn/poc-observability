@@ -5,6 +5,7 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Serilog;
 using Serilog.Sinks.Elasticsearch;
+using Serilog.Sinks.OpenTelemetry;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,7 +39,14 @@ builder.Host.UseSerilog((context, configuration) =>
         {
             IndexFormat = "applogs-{0:yyyy.MM}",
             AutoRegisterTemplate = true
+        }).WriteTo.OpenTelemetry(options =>
+        {
+            options.Endpoint = "http://host.docker.internal:4317";
+            options.ResourceAttributes.Add("service.name", "Facturacion");
         })
+        //.WriteTo.OpenTelemetry(
+        //    endpoint: "http://host.docker.internal:4317",
+        //    protocol:OtlpProtocol.HttpProtobuf)
         .Enrich.WithProperty("Application", "Facturacion");
 });
 
@@ -58,6 +66,10 @@ builder.Services.AddOpenTelemetry()
             {
                 var elasticpApm = Environment.GetEnvironmentVariable("ELASTIC_APM_URI") ?? "http://host.docker.internal:8400";
                 options.Endpoint = new Uri(elasticpApm);
+            })
+            .AddOtlpExporter(options =>
+            {
+                options.Endpoint = new Uri("http://host.docker.internal:4317");
             });
 
     })
@@ -68,11 +80,16 @@ builder.Services.AddOpenTelemetry()
             .AddHttpClientInstrumentation()
             .AddRuntimeInstrumentation()
             .AddMeter("MassTransit")
+            .AddMeter("CustomMetrics")
             .SetResourceBuilder(resourceBuilder)
             .AddOtlpExporter(options =>
             {
                 var elasticApm = Environment.GetEnvironmentVariable("ELASTIC_APM_URI") ?? "http://host.docker.internal:8400";
                 options.Endpoint = new Uri(elasticApm);
+            })
+            .AddOtlpExporter(options =>
+            {
+                options.Endpoint = new Uri("http://host.docker.internal:4317");
             });
     });
 

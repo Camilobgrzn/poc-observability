@@ -5,6 +5,7 @@ using OpenTelemetry.Trace;
 using Procesos;
 using Serilog;
 using Serilog.Sinks.Elasticsearch;
+using Serilog.Sinks.OpenTelemetry;
 
 IHost host = Host.CreateDefaultBuilder(args)
     //Configure Serilog
@@ -20,6 +21,9 @@ IHost host = Host.CreateDefaultBuilder(args)
                 AutoRegisterTemplate = true,
                 AutoRegisterTemplateVersion = AutoRegisterTemplateVersion.ESv7,
             })
+            .WriteTo.OpenTelemetry(
+                endpoint: "http://host.docker.internal:4317",
+                protocol: OtlpProtocol.HttpProtobuf)
             .Enrich.WithProperty("Application", "Procesos");
     })
     .ConfigureServices(services =>
@@ -49,6 +53,10 @@ IHost host = Host.CreateDefaultBuilder(args)
                     {
                         var elasticpApm = Environment.GetEnvironmentVariable("ELASTIC_APM_URI") ?? "http://host.docker.internal:8400";
                         options.Endpoint = new Uri(elasticpApm);
+                    })
+                    .AddOtlpExporter(options =>
+                    {
+                        options.Endpoint = new Uri("http://host.docker.internal:4317");
                     });
             })
             .WithMetrics(metricProviderBuilder =>
@@ -61,6 +69,10 @@ IHost host = Host.CreateDefaultBuilder(args)
                     {
                         var elasticpApm = Environment.GetEnvironmentVariable("ELASTIC_APM_URI") ?? "http://host.docker.internal:8400";
                         options.Endpoint = new Uri(elasticpApm);
+                    })
+                    .AddOtlpExporter(options =>
+                    {
+                        options.Endpoint = new Uri("http://host.docker.internal:4317");
                     });
             });
 
