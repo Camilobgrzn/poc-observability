@@ -5,8 +5,8 @@ using OpenTelemetry.Trace;
 using Procesos;
 using Serilog;
 using Serilog.Sinks.Elasticsearch;
-using Serilog.Sinks.OpenTelemetry;
 
+const string serviceName = "Procesos";
 IHost host = Host.CreateDefaultBuilder(args)
     //Configure Serilog
     .UseSerilog((context, configuration) =>
@@ -21,10 +21,12 @@ IHost host = Host.CreateDefaultBuilder(args)
                 AutoRegisterTemplate = true,
                 AutoRegisterTemplateVersion = AutoRegisterTemplateVersion.ESv7,
             })
-            .WriteTo.OpenTelemetry(
-                endpoint: "http://host.docker.internal:4317",
-                protocol: OtlpProtocol.HttpProtobuf)
-            .Enrich.WithProperty("Application", "Procesos");
+            .WriteTo.OpenTelemetry(options =>
+            {
+                options.Endpoint = "http://host.docker.internal:4317";
+                options.ResourceAttributes.Add("service.name", serviceName);
+            })
+            .Enrich.WithProperty("Application", serviceName);
     })
     .ConfigureServices(services =>
     {
@@ -41,7 +43,7 @@ IHost host = Host.CreateDefaultBuilder(args)
 
         // Configure OpenTelemetry
         var resourceBuilder = ResourceBuilder.CreateDefault()
-            .AddService("Procesos");
+            .AddService(serviceName);
 
         services.AddOpenTelemetry()
             .WithTracing(tracerProviderBuilder =>
